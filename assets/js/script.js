@@ -2,8 +2,8 @@ const OpenWeatherKey = "bd9f20ec53ac9e675acad3ce4fc3aa3d";
 var city;
 var lat;
 var long;
+var country;
 var currDay = dayjs().format("D"); //for 5-day forecast to compare last index day if +4 or +5
-console.log("current day: " + currDay);
 var searchEl = document.getElementById("search");
 var cityEl = document.getElementById("city");
 var tempEl = document.getElementById("currTemp");
@@ -12,9 +12,9 @@ var humidEl = document.getElementById("currHumid");
 var iconEl = document.getElementById("currImage");
 var forecastSection = document.getElementById("5forecast");
 var historyEl = document.getElementById("prevSearch");
+var storedCities = JSON.parse(localStorage.getItem("cities"));
 
-// generate 5 cards to place weather information
-function generateForecastCards() {
+function init() {
 	//example of card in ui-kit framework:
 	//  <div>
 	//      <div class="uk-card uk-card-default uk-card-hover uk-card-body uk-margin-small">
@@ -24,6 +24,8 @@ function generateForecastCards() {
 	//          <p>Humidity:</p>
 	//      </div>
 	//  </div>
+
+	// generate 5 cards to place weather information
 	for (var cards = 1; cards <= 5; cards++) {
 		var cardOutDiv = document.createElement("div");
 		var cardInDiv = document.createElement("div");
@@ -43,6 +45,41 @@ function generateForecastCards() {
 		}
 		forecastSection.append(cardOutDiv);
 	}
+
+	// TODO: generate previous search history from local save if storedCities isn't empty
+	if (storedCities !== null) {
+		storedCities.forEach((c) => {
+			createPreviousSearchButton(c);
+		});
+	}
+}
+
+function saveCity(location) {
+	var cities = [];
+	// if the cities storage has data then fill the cities array with the stored cities
+	if (storedCities !== null) {
+		cities = storedCities;
+	}
+	// extra: for later, change storage as object that can hold lat, long to skip getCoordinates function
+	// if (
+	// 	cities.some( ? may need to do some mapping instead of using some to try to check for if the city and country are new
+	// 		(cityname) =>
+	// 			cityname.city !== newCityLatLong.city &&
+	// 			cityname.country !== newCityLatLong.country
+	// 	)
+	// ) {
+	// var newCityLatLong = {
+	// 	city: city,
+	// 	country: country,
+	// 	lat: lat,
+	// 	long: long,
+	// };
+	var newCity = location;
+	if (!cities.includes(newCity)) {
+		cities.push(newCity);
+		localStorage.setItem("cities", JSON.stringify(cities));
+		createPreviousSearchButton(newCity);
+	}
 }
 
 function showCurrentWeather() {
@@ -53,16 +90,17 @@ function showCurrentWeather() {
 		"&lon=" +
 		long +
 		"&appid=" +
-		OpenWeatherKey;
-
+		OpenWeatherKey +
+		"&units=imperial";
+	var location = "";
 	fetch(currentWeatherUrl)
 		.then(function (response) {
 			return response.json();
 		})
 		.then(function (data) {
 			var today = dayjs().format("M/D/YYYY");
-			cityEl.textContent =
-				"Current Weather for " + city + ", " + data.sys.country + " (" + today + ")";
+			location = city + ", " + country;
+			cityEl.textContent = "Current Weather for " + location + " (" + today + ")";
 			iconEl.setAttribute(
 				"src",
 				"http://openweathermap.org/img/wn/" + data.weather[0].icon + "@2x.png"
@@ -71,11 +109,29 @@ function showCurrentWeather() {
 			currTemp.textContent = "Temperature: " + data.main.temp + " ℉";
 			currWind.textContent = "Wind: " + data.wind.speed + " MPH";
 			currHumid.textContent = "Humidity: " + data.main.humidity + "%";
+			saveCity(location);
 		});
+
+	// if (storedCities != null) {
+	// }
 }
 
+function createPreviousSearchButton(loc) {
+	var buttonEl = document.createElement("button");
+	buttonEl.setAttribute("type", "button");
+	buttonEl.setAttribute(
+		"class",
+		"uk-button uk-button-primary uk-width-1-1 uk-margin-small-bottom history"
+	);
+	buttonEl.textContent = loc;
+	buttonEl.addEventListener("click", function () {
+		getCoordinates(loc);
+	});
+	historyEl.prepend(buttonEl);
+}
+
+// show forecast of next 5 days
 function showForecastWeather() {
-	// show forecast of next 5 days
 	var requestForecastUrl =
 		"http://api.openweathermap.org/data/2.5/forecast?lat=" +
 		lat +
@@ -83,7 +139,7 @@ function showForecastWeather() {
 		long +
 		"&appid=" +
 		OpenWeatherKey +
-		"&units=metric";
+		"&units=imperial";
 	fetch(requestForecastUrl)
 		.then(function (response) {
 			console.log(response);
@@ -161,6 +217,7 @@ function clearWeather() {
 	}
 }
 
+// Gets lat, long based off of a city namee
 function getCoordinates(cityName) {
 	var requestGeocodeUrl =
 		"http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
@@ -170,9 +227,10 @@ function getCoordinates(cityName) {
 			if (response.status == 200) {
 				response.json().then(function (data) {
 					if (Object.keys(data).length > 0) {
-						city = cityName;
+						city = data[0].name;
 						lat = data[0].lat;
 						long = data[0].lon;
+						country = data[0].country;
 						console.log(lat + ", " + long);
 						showCurrentWeather();
 						showForecastWeather();
@@ -189,10 +247,7 @@ function getCoordinates(cityName) {
 		});
 }
 
-// TODO: print the history of the searches
-function printHistory() {}
-
-generateForecastCards();
+init();
 
 // Get location user submitted for search
 searchEl.addEventListener("click", function (event) {
@@ -200,6 +255,6 @@ searchEl.addEventListener("click", function (event) {
 	getCoordinates(city);
 });
 
-// Extra:
+// Extra for later:
 // Regular Expression for lat long to implement later.
 // var latLongRE = /^((\-?|\+?)?\d+(\.\d+)?),\s*((\-?|\+?)?\d+(\.\d+)?)$/;
