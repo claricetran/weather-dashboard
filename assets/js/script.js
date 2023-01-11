@@ -4,7 +4,7 @@ var country;
 var lat;
 var long;
 var currDay = dayjs().format("D"); //for 5-day forecast to compare last index day if +4 or +5
-console.log(currDay);
+console.log("current day: " + currDay);
 var searchEl = document.getElementById("search");
 var cityEl = document.getElementById("city");
 var tempEl = document.getElementById("currTemp");
@@ -29,23 +29,23 @@ function generateForecastCards() {
 		var cardInDiv = document.createElement("div");
 		cardInDiv.setAttribute(
 			"class",
-			"uk-card uk-card-default uk-card-hover uk-card-body uk-margin-small"
+			"uk-card uk-card-default uk-card-hover uk-card-body uk-margin-small uk-background-muted"
 		);
 		cardInDiv.setAttribute("id", "day-" + cards);
 		cardOutDiv.append(cardInDiv);
 		var cardH3 = document.createElement("h3");
 		cardInDiv.append(cardH3);
+		var cardImg = document.createElement("img");
+		cardInDiv.append(cardImg);
 		for (var p = 0; p < 3; p++) {
 			var pEl = document.createElement("p");
 			cardInDiv.append(pEl);
 		}
 		forecastSection.append(cardOutDiv);
-		// when getting forecast api navigate through contents of cards by childNodes[index]
 	}
 }
 
 function getCoordinates(cityName) {
-	//console.log(cityName);
 	var requestGeocodeUrl =
 		"http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
 	fetch(requestGeocodeUrl)
@@ -58,7 +58,7 @@ function getCoordinates(cityName) {
 			long = data[0].lon;
 			console.log(lat + ", " + long);
 			showCurrentWeather();
-			//showForecastWeather();
+			showForecastWeather();
 		});
 }
 
@@ -108,26 +108,54 @@ function showForecastWeather() {
 			return response.json();
 		})
 		.then(function (data) {
-			var date = dayjs.unix(data.list[8].dt).format("M/D/YYYY h:mm a");
-			// var tempF = data[0].list.main.temp;
-			// var wind = data[0].list.wind.speed;
-			// var humidity = data[0].list.main.humidity;
-			// var iconsrc = data[0].list.weather.icon;
-			// var description = data[0].list.weather.description;
-			console.log(date);
-			// console.log(tempF);
-			// console.log(wind);
-			// console.log(humidity);
-			// console.log(iconsrc);
-			// console.log(description);
-			// var cardGrid = document.createElement("div");
-			// var card = document.createElement("div");
-			// card.setAttribute("class", "uk-card uk-card-default uk-card-hover uk-card-body uk-margin-small");
-			// var date = document.createElement("h3");
-			// date.textContent("("+date+")");
-			// var icon = document.createElement("img")
-			// icon.setAttribute("src",  "http://openweathermap.org/img/wn/"+iconsrc+"@2x.png");
-			// icon.setAttribute("alt", data[0].weather.description);
+			var startIndex = 0;
+			// forecast API returns a list of 40 forecast data for every 3 hours from the next valid hour that is upcoming.
+			// When the next hour is 12 AM, then the index should start at 0.
+			console.log(data.list[data.list.length - 1].dt);
+			console.log(
+				"Last Index Day: " + dayjs.unix(data.list[data.list.length - 1].dt).format("D")
+			);
+			console.log(dayjs().add(4, "day").format("D"));
+			// If last day index is not 4 days away, the forecast of the next day needs to be found in the next 8 indexes because 0 still shows data for the current day.
+			if (
+				dayjs.unix(data.list[data.list.length - 1].dt).format("D") !=
+				dayjs().add(4, "day").format("D")
+			) {
+				var searchIndex = 0;
+				while (startIndex == 0) {
+					console.log(
+						"curr Index Day: " +
+							dayjs.unix(data.list[searchIndex].dt).format("D") +
+							" tomorrow: " +
+							dayjs().add(1, "day").format("D")
+					);
+					if (
+						dayjs.unix(data.list[searchIndex].dt).format("D") ==
+						dayjs().add(1, "day").format("D")
+					) {
+						startIndex = searchIndex;
+					} else {
+						searchIndex++;
+					}
+				}
+			}
+			console.log(startIndex);
+			var dayID = 1;
+			for (startIndex; startIndex < data.list.length; startIndex += 8) {
+				var card = document.getElementById("day-" + dayID).childNodes;
+				card[0].textContent = dayjs.unix(data.list[startIndex].dt).format("M/D/YYYY");
+				card[1].setAttribute(
+					"src",
+					"http://openweathermap.org/img/wn/" +
+						data.list[startIndex].weather[0].icon +
+						"@2x.png"
+				);
+				card[1].setAttribute("alt", data.list[startIndex].weather.description);
+				card[2].textContent = "Temperature: " + data.list[startIndex].main.temp + " ℉";
+				card[3].textContent = "Wind: " + data.list[startIndex].wind.speed + " MPH";
+				card[4].textContent = "Humidity: " + data.list[startIndex].main.humidity + " %";
+				dayID++;
+			}
 		});
 	// if request if valid then save the object of the place: city-name, (state-name if available), country-name, latitude: number, longitude: number to an object array
 	// if the request is already in local storage then there's no need to save.
