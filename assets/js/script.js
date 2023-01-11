@@ -1,6 +1,5 @@
 const OpenWeatherKey = "bd9f20ec53ac9e675acad3ce4fc3aa3d";
 var city;
-var country;
 var lat;
 var long;
 var currDay = dayjs().format("D"); //for 5-day forecast to compare last index day if +4 or +5
@@ -12,7 +11,9 @@ var windEl = document.getElementById("currWind");
 var humidEl = document.getElementById("currHumid");
 var iconEl = document.getElementById("currImage");
 var forecastSection = document.getElementById("5forecast");
+var historyEl = document.getElementById("prevSearch");
 
+// generate 5 cards to place weather information
 function generateForecastCards() {
 	//example of card in ui-kit framework:
 	//  <div>
@@ -23,7 +24,6 @@ function generateForecastCards() {
 	//          <p>Humidity:</p>
 	//      </div>
 	//  </div>
-	// generate 5 cards to place weather information
 	for (var cards = 1; cards <= 5; cards++) {
 		var cardOutDiv = document.createElement("div");
 		var cardInDiv = document.createElement("div");
@@ -45,23 +45,6 @@ function generateForecastCards() {
 	}
 }
 
-function getCoordinates(cityName) {
-	var requestGeocodeUrl =
-		"http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
-	fetch(requestGeocodeUrl)
-		.then(function (response) {
-			return response.json();
-		})
-		.then(function (data) {
-			city = cityName;
-			lat = data[0].lat;
-			long = data[0].lon;
-			console.log(lat + ", " + long);
-			showCurrentWeather();
-			showForecastWeather();
-		});
-}
-
 function showCurrentWeather() {
 	// show current weather first with current weather API
 	var currentWeatherUrl =
@@ -74,13 +57,12 @@ function showCurrentWeather() {
 
 	fetch(currentWeatherUrl)
 		.then(function (response) {
-			console.log(response);
 			return response.json();
 		})
 		.then(function (data) {
 			var today = dayjs().format("M/D/YYYY");
-
-			cityEl.textContent = "Current Weather for " + city + " (" + today + ")";
+			cityEl.textContent =
+				"Current Weather for " + city + ", " + data.sys.country + " (" + today + ")";
 			iconEl.setAttribute(
 				"src",
 				"http://openweathermap.org/img/wn/" + data.weather[0].icon + "@2x.png"
@@ -161,6 +143,53 @@ function showForecastWeather() {
 	// if the request is already in local storage then there's no need to save.
 }
 
+// Clears out all listed weather data
+function clearWeather() {
+	iconEl.setAttribute("src", "");
+	iconEl.setAttribute("alt", "");
+	currTemp.textContent = "";
+	currWind.textContent = "";
+	currHumid.textContent = "";
+	for (var c = 1; c <= 5; c++) {
+		var card = document.getElementById("day-" + c).childNodes;
+		card[0].textContent = "";
+		card[1].setAttribute("src", "");
+		card[1].setAttribute("alt", "");
+		card[2].textContent = "";
+		card[3].textContent = "";
+		card[4].textContent = "";
+	}
+}
+
+function getCoordinates(cityName) {
+	var requestGeocodeUrl =
+		"http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
+	fetch(requestGeocodeUrl)
+		.then(function (response) {
+			console.log(response);
+			if (response.status == 200) {
+				response.json().then(function (data) {
+					if (Object.keys(data).length > 0) {
+						city = cityName;
+						lat = data[0].lat;
+						long = data[0].lon;
+						console.log(lat + ", " + long);
+						showCurrentWeather();
+						showForecastWeather();
+					} else {
+						cityEl.textContent =
+							"Invalid input. Please enter a 'city', 'city, state', or 'city, country' to view the weather there.";
+						clearWeather();
+					}
+				});
+			}
+		})
+		.catch(function (error) {
+			cityEl.textContent = "Unable to load weather information.";
+		});
+}
+
+// TODO: print the history of the searches
 function printHistory() {}
 
 generateForecastCards();
@@ -170,7 +199,6 @@ searchEl.addEventListener("click", function (event) {
 	city = document.getElementById("location").value;
 	getCoordinates(city);
 });
-// TODO: print the history of the searches
 
 // Extra:
 // Regular Expression for lat long to implement later.
