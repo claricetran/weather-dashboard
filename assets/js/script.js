@@ -1,8 +1,9 @@
 const OpenWeatherKey = "bd9f20ec53ac9e675acad3ce4fc3aa3d";
 var city;
+var state;
+var country;
 var lat;
 var long;
-var country;
 var currDay = dayjs().format("D"); //for 5-day forecast to compare last index day if +4 or +5
 var searchEl = document.getElementById("search");
 var cityEl = document.getElementById("city");
@@ -12,7 +13,6 @@ var humidEl = document.getElementById("currHumid");
 var iconEl = document.getElementById("currImage");
 var forecastSection = document.getElementById("5forecast");
 var historyEl = document.getElementById("prevSearch");
-var storedCities = JSON.parse(localStorage.getItem("cities"));
 
 function init() {
 	//example of card in ui-kit framework:
@@ -48,6 +48,7 @@ function init() {
 	}
 
 	// Generates previous search history from local save if storedCities as buttons if save isn't empty
+	var storedCities = JSON.parse(localStorage.getItem("cities"));
 	if (storedCities !== null && storedCities.length > 0) {
 		storedCities.forEach((c) => {
 			createPreviousSearchButton(c);
@@ -57,34 +58,54 @@ function init() {
 
 function saveCity(location) {
 	var cities = [];
+	var storedCities = JSON.parse(localStorage.getItem("cities"));
 	// if the cities storage has data then fill the cities array with the stored cities
 	if (storedCities !== null && storedCities.length > 0) {
-		cities = storedCities;
+		cities = storedCities.slice();
 	}
-	// extra: for later, change storage as object that can hold lat, long to skip getCoordinates function
-	// if (
-	// 	cities.some( ? may need to do some mapping instead of using some to try to check for if the city and country are new
-	// 		(cityname) =>
-	// 			cityname.city !== newCityLatLong.city &&
-	// 			cityname.country !== newCityLatLong.country
-	// 	)
-	// ) {
-	// var newCityLatLong = {
-	// 	city: city,
-	// 	country: country,
-	// 	lat: lat,
-	// 	long: long,
-	// };
-	var newCity = location;
-	if (!cities.includes(newCity)) {
-		cities.push(newCity);
+	if (!cities.includes(location)) {
+		var locationObject = {
+			city: city,
+			state: state,
+			country: country,
+			latitude: lat,
+			longitude: long,
+		};
+		cities.push(location);
+		localStorage.setItem(location, JSON.stringify(locationObject));
 		localStorage.setItem("cities", JSON.stringify(cities));
-		createPreviousSearchButton(newCity);
+		createPreviousSearchButton(location);
 	}
 }
 
+// creates a button with click event listener to
+function createPreviousSearchButton(loc) {
+	var buttonEl = document.createElement("button");
+	buttonEl.setAttribute("type", "button");
+	buttonEl.setAttribute(
+		"class",
+		"uk-button uk-button-primary uk-width-1-1 uk-margin-small-bottom history"
+	);
+	buttonEl.textContent = loc;
+	buttonEl.addEventListener("click", function () {
+		var locObject = JSON.parse(localStorage.getItem(loc));
+		city = locObject.city;
+		country = locObject.country;
+		if (country == "US") {
+			state = locObject.state;
+		} else {
+			state = "";
+		}
+		lat = locObject.latitude;
+		long = locObject.longitude;
+		showCurrentWeather();
+		showForecastWeather();
+	});
+	historyEl.prepend(buttonEl);
+}
+
+// show current weather with current weather API
 function showCurrentWeather() {
-	// show current weather first with current weather API
 	var currentWeatherUrl =
 		"https://api.openweathermap.org/data/2.5/weather?lat=" +
 		lat +
@@ -100,7 +121,11 @@ function showCurrentWeather() {
 		})
 		.then(function (data) {
 			var today = dayjs().format("M/D/YYYY");
-			location = city + ", " + country;
+			if (country == "US") {
+				location = city + ", " + state;
+			} else {
+				location = city + ", " + country;
+			}
 			cityEl.textContent = "Current Weather for " + location + " (" + today + ")";
 			iconEl.setAttribute(
 				"src",
@@ -110,22 +135,7 @@ function showCurrentWeather() {
 			currTemp.textContent = "Temperature: " + data.main.temp + " ℉";
 			currWind.textContent = "Wind: " + data.wind.speed + " MPH";
 			currHumid.textContent = "Humidity: " + data.main.humidity + "%";
-			saveCity(location);
 		});
-}
-
-function createPreviousSearchButton(loc) {
-	var buttonEl = document.createElement("button");
-	buttonEl.setAttribute("type", "button");
-	buttonEl.setAttribute(
-		"class",
-		"uk-button uk-button-primary uk-width-1-1 uk-margin-small-bottom history"
-	);
-	buttonEl.textContent = loc;
-	buttonEl.addEventListener("click", function () {
-		getCoordinates(loc);
-	});
-	historyEl.prepend(buttonEl);
 }
 
 // show forecast of next 5 days
@@ -215,6 +225,13 @@ function getCoordinates(cityName) {
 						lat = data[0].lat;
 						long = data[0].lon;
 						country = data[0].country;
+						if (country == "US") {
+							state = data[0].state;
+							saveCity(city + ", " + state);
+						} else {
+							state = "";
+							saveCity(city + ", " + country);
+						}
 						showCurrentWeather();
 						showForecastWeather();
 					} else {
@@ -228,6 +245,7 @@ function getCoordinates(cityName) {
 		.catch(function (error) {
 			cityEl.textContent = "Unable to load weather information.";
 		});
+	searchEl.value = "";
 }
 
 init();
