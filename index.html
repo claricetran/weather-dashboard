@@ -25,7 +25,7 @@
 			</h1>
 		</header>
 		<aside
-			class="uk-align-left uk-padding uk-height-viewport uk-padding-remove-top uk-margin-remove-right uk-width-1-4@s"">
+			class="uk-align-left uk-padding-small uk-padding-remove-top uk-margin-remove-right uk-width-1-5@m">
 			<h2>Search for a City:</h2>
 			<section>
 				<input
@@ -45,22 +45,21 @@
 			<hr />
 			<div id="prevSearch"></div>
 		</aside>
-		<main>
-			<section class="uk-section uk-background-primary uk-padding uk-margin-right uk-light">
+		<main
+			class="uk-height-viewport uk-margin-right uk-margin-left uk-width-3-4@m uk-align-right@m">
+			<section class="uk-section uk-background-primary uk-padding uk-light">
 				<h2 id="city">
-					Enter a 'city' or 'city, state' or 'city, country' to view the weather there.
+					Enter a 'city' or 'city, state' or 'city, country' in the search bar to view the
+					weather there.
 				</h2>
 				<img id="currImage" src="" alt="" />
 				<p id="currTemp"></p>
 				<p id="currWind"></p>
 				<p id="currHumid"></p>
 			</section>
-			<section class="uk-margin-top">
+			<section class="uk-margin-top uk-margin-bottom">
 				<h3>5-Day Forecast:</h3>
-				<div
-					id="5forecast"
-					class="uk-child-width-1-5@m uk-grid-match uk-padding uk-padding-remove-left uk-padding-remove-top"
-					uk-grid></div>
+				<div id="5forecast" class="uk-child-width-1-5@m uk-grid-match" uk-grid></div>
 			</section>
 		</main>
 		<script src="https://cdn.jsdelivr.net/npm/uikit@3.15.20/dist/js/uikit.min.js"></script>

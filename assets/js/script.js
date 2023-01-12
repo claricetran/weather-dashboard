@@ -31,10 +31,11 @@ function init() {
 		var cardInDiv = document.createElement("div");
 		cardInDiv.setAttribute(
 			"class",
-			"uk-card uk-card-default uk-card-hover uk-card-body uk-margin-small uk-background-muted"
+			"uk-card uk-card-default uk-card-hover uk-card-body uk-margin-small uk-light"
 		);
 		cardInDiv.setAttribute("id", "day-" + cards);
 		cardOutDiv.append(cardInDiv);
+		cardInDiv.setAttribute("style", "background-color: rgba(0, 212, 255);");
 		var cardH3 = document.createElement("h3");
 		cardInDiv.append(cardH3);
 		var cardImg = document.createElement("img");
@@ -46,8 +47,8 @@ function init() {
 		forecastSection.append(cardOutDiv);
 	}
 
-	// TODO: generate previous search history from local save if storedCities isn't empty
-	if (storedCities !== null) {
+	// Generates previous search history from local save if storedCities as buttons if save isn't empty
+	if (storedCities !== null && storedCities.length > 0) {
 		storedCities.forEach((c) => {
 			createPreviousSearchButton(c);
 		});
@@ -57,7 +58,7 @@ function init() {
 function saveCity(location) {
 	var cities = [];
 	// if the cities storage has data then fill the cities array with the stored cities
-	if (storedCities !== null) {
+	if (storedCities !== null && storedCities.length > 0) {
 		cities = storedCities;
 	}
 	// extra: for later, change storage as object that can hold lat, long to skip getCoordinates function
@@ -111,9 +112,6 @@ function showCurrentWeather() {
 			currHumid.textContent = "Humidity: " + data.main.humidity + "%";
 			saveCity(location);
 		});
-
-	// if (storedCities != null) {
-	// }
 }
 
 function createPreviousSearchButton(loc) {
@@ -142,18 +140,12 @@ function showForecastWeather() {
 		"&units=imperial";
 	fetch(requestForecastUrl)
 		.then(function (response) {
-			console.log(response);
 			return response.json();
 		})
 		.then(function (data) {
 			var startIndex = 0;
 			// forecast API returns a list of 40 forecast data for every 3 hours from the next valid hour that is upcoming.
 			// When the next hour is 12 AM, then the index should start at 0.
-			console.log(data.list[data.list.length - 1].dt);
-			console.log(
-				"Last Index Day: " + dayjs.unix(data.list[data.list.length - 1].dt).format("D")
-			);
-			console.log(dayjs().add(4, "day").format("D"));
 			// If last day index is not 4 days away, the forecast of the next day needs to be found in the next 8 indexes because 0 still shows data for the current day.
 			if (
 				dayjs.unix(data.list[data.list.length - 1].dt).format("D") !=
@@ -161,12 +153,6 @@ function showForecastWeather() {
 			) {
 				var searchIndex = 0;
 				while (startIndex == 0) {
-					console.log(
-						"curr Index Day: " +
-							dayjs.unix(data.list[searchIndex].dt).format("D") +
-							" tomorrow: " +
-							dayjs().add(1, "day").format("D")
-					);
 					if (
 						dayjs.unix(data.list[searchIndex].dt).format("D") ==
 						dayjs().add(1, "day").format("D")
@@ -177,7 +163,6 @@ function showForecastWeather() {
 					}
 				}
 			}
-			console.log(startIndex);
 			var dayID = 1;
 			for (startIndex; startIndex < data.list.length; startIndex += 8) {
 				var card = document.getElementById("day-" + dayID).childNodes;
@@ -223,7 +208,6 @@ function getCoordinates(cityName) {
 		"http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
 	fetch(requestGeocodeUrl)
 		.then(function (response) {
-			console.log(response);
 			if (response.status == 200) {
 				response.json().then(function (data) {
 					if (Object.keys(data).length > 0) {
@@ -231,7 +215,6 @@ function getCoordinates(cityName) {
 						lat = data[0].lat;
 						long = data[0].lon;
 						country = data[0].country;
-						console.log(lat + ", " + long);
 						showCurrentWeather();
 						showForecastWeather();
 					} else {
