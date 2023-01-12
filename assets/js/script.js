@@ -104,7 +104,7 @@ function showCurrentWeather() {
 			cityEl.textContent = "Current Weather for " + location + " (" + today + ")";
 			iconEl.setAttribute(
 				"src",
-				"http://openweathermap.org/img/wn/" + data.weather[0].icon + "@2x.png"
+				"https://openweathermap.org/img/wn/" + data.weather[0].icon + "@2x.png"
 			);
 			iconEl.setAttribute("alt", data.weather.description);
 			currTemp.textContent = "Temperature: " + data.main.temp + " ℉";
@@ -131,7 +131,7 @@ function createPreviousSearchButton(loc) {
 // show forecast of next 5 days
 function showForecastWeather() {
 	var requestForecastUrl =
-		"http://api.openweathermap.org/data/2.5/forecast?lat=" +
+		"https://api.openweathermap.org/data/2.5/forecast?lat=" +
 		lat +
 		"&lon=" +
 		long +
@@ -169,7 +169,7 @@ function showForecastWeather() {
 				card[0].textContent = dayjs.unix(data.list[startIndex].dt).format("M/D/YYYY");
 				card[1].setAttribute(
 					"src",
-					"http://openweathermap.org/img/wn/" +
+					"https://openweathermap.org/img/wn/" +
 						data.list[startIndex].weather[0].icon +
 						"@2x.png"
 				);
@@ -205,7 +205,7 @@ function clearWeather() {
 // Gets lat, long based off of a city namee
 function getCoordinates(cityName) {
 	var requestGeocodeUrl =
-		"http://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
+		"https://api.openweathermap.org/geo/1.0/direct?q=" + cityName + "&appid=" + OpenWeatherKey;
 	fetch(requestGeocodeUrl)
 		.then(function (response) {
 			if (response.status == 200) {
