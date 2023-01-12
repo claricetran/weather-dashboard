@@ -6,6 +6,7 @@ var lat;
 var long;
 var currDay = dayjs().format("D"); //for 5-day forecast to compare last index day if +4 or +5
 var searchEl = document.getElementById("search");
+var userInputCity = document.getElementById("input");
 var cityEl = document.getElementById("city");
 var tempEl = document.getElementById("currTemp");
 var windEl = document.getElementById("currWind");
@@ -236,7 +237,7 @@ function getCoordinates(cityName) {
 						showForecastWeather();
 					} else {
 						cityEl.textContent =
-							"Invalid input. Please enter a 'city', 'city, state', or 'city, country' to view the weather there.";
+							"Invalid input. Please enter a valid city to view the weather there.";
 						clearWeather();
 					}
 				});
@@ -245,14 +246,14 @@ function getCoordinates(cityName) {
 		.catch(function (error) {
 			cityEl.textContent = "Unable to load weather information.";
 		});
-	searchEl.value = "";
+	userInputCity.value = "";
 }
 
 init();
 
 // Get location user submitted for search
 searchEl.addEventListener("click", function (event) {
-	city = document.getElementById("location").value;
+	city = userInputCity.value;
 	getCoordinates(city);
 });
 
