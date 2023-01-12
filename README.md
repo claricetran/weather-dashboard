@@ -10,13 +10,8 @@ To reach this weather dashboard, the user just has to go to the site [here](http
 
 ## Usage
 
-Provide instructions and examples for use. Include screenshots as needed.
-
-To add a screenshot, create an `assets/images` folder in your repository and upload your screenshot to it. Then, using the relative filepath, add it to your README using the following syntax:
-
-    ```md
-    ![alt text](assets/images/screenshot.png)
-    ```
+Upon loading the weather dashboard, the user is given instructions to put a city into the search bar. The user must click the button in order for the page to return the weather data.
+Once clicked, the weather data is displayed in the main section to show the current weather and a 5-day weather forecast. If the searched city is a new search then it will be saved below the search bar and can be clicked on to load the weather data for that city conveniently.
 
 ## Credits
 
